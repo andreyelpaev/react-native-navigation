@@ -51,7 +51,7 @@ public abstract class Screen extends RelativeLayout implements Subscriber {
     protected final ScreenParams screenParams;
     protected TopBar topBar;
     private final LeftButtonOnClickListener leftButtonOnClickListener;
-    private ScreenAnimator screenAnimator;
+    public ScreenAnimator screenAnimator;
     protected StyleParams styleParams;
     public final SharedElements sharedElements;
 
@@ -229,7 +229,7 @@ public abstract class Screen extends RelativeLayout implements Subscriber {
     }
 
     public void setTitleBarTitle(String title) {
-       topBar.setTitle(title, styleParams);
+        topBar.setTitle(title, styleParams);
     }
 
     public void setTitleBarSubtitle(String subtitle) {
@@ -299,6 +299,18 @@ public abstract class Screen extends RelativeLayout implements Subscriber {
                 if (onAnimationEnd != null) onAnimationEnd.run();
             }
         });
+    }
+
+    public void show(boolean animated, final Runnable onAnimationEnd, final NavigationType type, Screen previousScreen) {
+        NavigationApplication.instance.getEventEmitter().sendWillAppearEvent(getScreenParams(), type);
+        setStyle();
+        screenAnimator.show(animated, new Runnable() {
+            @Override
+            public void run() {
+                NavigationApplication.instance.getEventEmitter().sendDidAppearEvent(getScreenParams(), type);
+                if (onAnimationEnd != null) onAnimationEnd.run();
+            }
+        }, previousScreen);
     }
 
     public void showWithSharedElementsTransitions(Map<String, SharedElementTransition> fromElements, final Runnable onAnimationEnd) {

@@ -133,7 +133,7 @@ public class ScreenStack {
                         NavigationApplication.instance.getEventEmitter().sendDidDisappearEvent(previousScreen.getScreenParams(), NavigationType.Push);
                         parent.removeView(previousScreen);
                     }
-                }, NavigationType.Push);
+                }, NavigationType.Push, previousScreen);
             }
         });
     }
@@ -230,6 +230,9 @@ public class ScreenStack {
 
     private void readdPrevious(Screen previous) {
         previous.setVisibility(View.VISIBLE);
+        previous.setScaleX(1);
+        previous.setScaleY(1);
+        previous.setAlpha(1);
         parent.addView(previous, 0);
     }
 

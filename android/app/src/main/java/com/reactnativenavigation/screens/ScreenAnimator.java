@@ -23,8 +23,17 @@ class ScreenAnimator {
 
     ScreenAnimator(Screen screen) {
         this.screen = screen;
-        translationY = 0.08f * ViewUtils.getWindowHeight(screen.activity);
-        translationX = 0.08f * ViewUtils.getWindowWidth(screen.activity);
+        translationY = ViewUtils.getWindowHeight(screen.activity);
+        translationX = ViewUtils.getWindowWidth(screen.activity);
+    }
+
+    public void show(boolean animate, final Runnable onAnimationEnd, Screen previousScreen) {
+        if (animate) {
+            createShowAnimator(onAnimationEnd, previousScreen).start();
+        } else {
+            screen.setVisibility(View.VISIBLE);
+            NavigationApplication.instance.runOnMainThread(onAnimationEnd, 200);
+        }
     }
 
     public void show(boolean animate, final Runnable onAnimationEnd) {
@@ -53,7 +62,65 @@ class ScreenAnimator {
         }
     }
 
-    private Animator createShowAnimator(final @Nullable Runnable onAnimationEnd) {
+    public Animator createShowAnimator(final @Nullable Runnable onAnimationEnd, Screen previousScreen) {
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(screen, View.ALPHA, 0, 1);
+        alpha.setInterpolator(new DecelerateInterpolator());
+        alpha.setDuration(200);
+
+        AnimatorSet set = new AnimatorSet();
+        switch (String.valueOf(this.screen.screenParams.animationType)) {
+            case "fade": {
+                set.play(alpha);
+                break;
+            }
+            case "slide-horizontal": {
+                ObjectAnimator previousAlpha = ObjectAnimator.ofFloat(previousScreen, View.ALPHA, 0);
+                previousAlpha.setInterpolator(new LinearInterpolator());
+                previousAlpha.setStartDelay(100);
+                previousAlpha.setDuration(150);
+
+                ObjectAnimator previousScaleX = ObjectAnimator.ofFloat(previousScreen, View.SCALE_X, 1, 0.8f);
+                previousScaleX.setInterpolator(new DecelerateInterpolator());
+                previousScaleX.setDuration(500);
+
+                ObjectAnimator previousScaleY = ObjectAnimator.ofFloat(previousScreen, View.SCALE_Y, 1, 0.8f);
+                previousScaleY.setInterpolator(new DecelerateInterpolator());
+                previousScaleY.setDuration(500);
+
+                ObjectAnimator translationX = ObjectAnimator.ofFloat(screen, View.TRANSLATION_X, this.translationX, 0);
+                translationX.setInterpolator(new DecelerateInterpolator());
+                translationX.setDuration(300);
+
+                set.playTogether(previousScaleX, previousScaleY, previousAlpha, translationX);
+                break;
+            }
+            default: {
+                ObjectAnimator translationY = ObjectAnimator.ofFloat(screen, View.TRANSLATION_Y, this.translationY, 0);
+                translationY.setInterpolator(new DecelerateInterpolator());
+                translationY.setDuration(280);
+
+                set.playTogether(translationY, alpha);
+                break;
+            }
+        }
+
+        set.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                screen.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (onAnimationEnd != null) {
+                    onAnimationEnd.run();
+                }
+            }
+        });
+        return set;
+    }
+
+    public Animator createShowAnimator(final @Nullable Runnable onAnimationEnd) {
         ObjectAnimator alpha = ObjectAnimator.ofFloat(screen, View.ALPHA, 0, 1);
         alpha.setInterpolator(new DecelerateInterpolator());
         alpha.setDuration(200);
@@ -69,7 +136,7 @@ class ScreenAnimator {
                 translationX.setInterpolator(new DecelerateInterpolator());
                 translationX.setDuration(280);
 
-                set.playTogether(translationX, alpha);
+                set.playTogether(translationX);
                 break;
             }
             default: {
