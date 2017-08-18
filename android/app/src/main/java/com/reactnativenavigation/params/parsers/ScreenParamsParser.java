@@ -11,6 +11,8 @@ import com.reactnativenavigation.react.ImageLoader;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.reactnativenavigation.params.parsers.ScreenTransitionsParser.getScreenTransitions;
+
 public class ScreenParamsParser extends Parser {
     private static final String KEY_TITLE = "title";
     private static final String KEY_SUBTITLE = "subtitle";
@@ -23,6 +25,7 @@ public class ScreenParamsParser extends Parser {
     private static final String FRAGMENT_CREATOR_PASS_PROPS = "fragmentCreatorPassProps";
     private static final String OVERRIDE_BACK_PRESS = "overrideBackPress";
     private static final String ANIMATION_TYPE = "animationType";
+    private static final String SCREEN_TRANSITIONS = "screenTransitions";
 
     @SuppressWarnings("ConstantConditions")
     public static ScreenParams parse(Bundle params) {
@@ -56,6 +59,8 @@ public class ScreenParamsParser extends Parser {
         result.sharedElementsTransitions = getSharedElementsTransitions(params);
 
         result.animationType = params.getString(ANIMATION_TYPE);
+        result.screenTransitionsParams = getScreenTransitions(params.getBundle(SCREEN_TRANSITIONS
+        ));
 
         return result;
     }

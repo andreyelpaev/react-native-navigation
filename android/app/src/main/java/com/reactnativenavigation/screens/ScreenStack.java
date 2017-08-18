@@ -218,7 +218,7 @@ public class ScreenStack {
             }
         };
         if (animated) {
-            toRemove.animateHide(previous.sharedElements.getToElements(), onAnimationEnd, NavigationType.Pop);
+            toRemove.animateHide(previous.sharedElements.getToElements(), onAnimationEnd, NavigationType.Pop, previous);
         } else {
             toRemove.hide(previous.sharedElements.getToElements(), onAnimationEnd, NavigationType.Pop);
         }

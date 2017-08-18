@@ -273,30 +273,12 @@ public abstract class Screen extends RelativeLayout implements Subscriber {
 
     public abstract void setOnDisplayListener(OnDisplayListener onContentViewDisplayedListener);
 
-    public void show(NavigationType type) {
-        NavigationApplication.instance.getEventEmitter().sendWillAppearEvent(getScreenParams(), type);
-        NavigationApplication.instance.getEventEmitter().sendDidAppearEvent(getScreenParams(), type);
-        screenAnimator.show(screenParams.animateScreenTransitions);
-    }
-
     public void show(boolean animated, final NavigationType type) {
         NavigationApplication.instance.getEventEmitter().sendWillAppearEvent(getScreenParams(), type);
         screenAnimator.show(animated, new Runnable() {
             @Override
             public void run() {
                 NavigationApplication.instance.getEventEmitter().sendDidAppearEvent(getScreenParams(), type);
-            }
-        });
-    }
-
-    public void show(boolean animated, final Runnable onAnimationEnd, final NavigationType type) {
-        NavigationApplication.instance.getEventEmitter().sendWillAppearEvent(getScreenParams(), type);
-        setStyle();
-        screenAnimator.show(animated, new Runnable() {
-            @Override
-            public void run() {
-                NavigationApplication.instance.getEventEmitter().sendDidAppearEvent(getScreenParams(), type);
-                if (onAnimationEnd != null) onAnimationEnd.run();
             }
         });
     }
@@ -334,12 +316,29 @@ public abstract class Screen extends RelativeLayout implements Subscriber {
         }
     }
 
+    public void hide(Map<String, SharedElementTransition> sharedElements, Runnable onAnimationEnd, NavigationType type, Screen previous) {
+        removeHiddenSharedElements();
+        if (hasVisibleSharedElements()) {
+            hideWithSharedElementTransitions(sharedElements, onAnimationEnd);
+        } else {
+            hide(false, onAnimationEnd, type);
+        }
+    }
+
     public void animateHide(Map<String, SharedElementTransition> sharedElements, Runnable onAnimationEnd, NavigationType type) {
         removeHiddenSharedElements();
         if (hasVisibleSharedElements()) {
             hideWithSharedElementTransitions(sharedElements, onAnimationEnd);
         } else {
             hide(true, onAnimationEnd, type);
+        }
+    }
+    public void animateHide(Map<String, SharedElementTransition> sharedElements, Runnable onAnimationEnd, NavigationType type, Screen previous) {
+        removeHiddenSharedElements();
+        if (hasVisibleSharedElements()) {
+            hideWithSharedElementTransitions(sharedElements, onAnimationEnd);
+        } else {
+            hide(true, onAnimationEnd, type, previous);
         }
     }
 
@@ -364,6 +363,17 @@ public abstract class Screen extends RelativeLayout implements Subscriber {
                 if (onAnimatedEnd != null) onAnimatedEnd.run();
             }
         });
+    }
+
+    private void hide(boolean animated, final Runnable onAnimatedEnd, final NavigationType type, Screen previous) {
+        NavigationApplication.instance.getEventEmitter().sendWillDisappearEvent(getScreenParams(), type);
+        screenAnimator.hide(animated, new Runnable() {
+            @Override
+            public void run() {
+                NavigationApplication.instance.getEventEmitter().sendDidDisappearEvent(getScreenParams(), type);
+                if (onAnimatedEnd != null) onAnimatedEnd.run();
+            }
+        }, previous);
     }
 
     public void showContextualMenu(ContextualMenuParams params, Callback onButtonClicked) {
