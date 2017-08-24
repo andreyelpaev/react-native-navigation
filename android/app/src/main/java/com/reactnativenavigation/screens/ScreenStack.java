@@ -12,6 +12,7 @@ import com.facebook.react.bridge.Callback;
 import com.reactnativenavigation.NavigationApplication;
 import com.reactnativenavigation.params.ContextualMenuParams;
 import com.reactnativenavigation.params.FabParams;
+import com.reactnativenavigation.params.PageParams;
 import com.reactnativenavigation.params.ScreenParams;
 import com.reactnativenavigation.params.StyleParams;
 import com.reactnativenavigation.params.TitleBarButtonParams;
@@ -396,9 +397,21 @@ public class ScreenStack {
     }
 
     public boolean handleBackPressInJs() {
-        ScreenParams currentScreen = stack.peek().screenParams;
+        Screen screen = stack.peek();
+        ScreenParams currentScreen = screen.screenParams;
+        String navigatorEventId = currentScreen.getNavigatorEventId();
+        if (currentScreen.hasTopTabs()) {
+            if (screen instanceof ViewPagerScreen) {
+                int itemIndex = ((ViewPagerScreen) screen).getCurrentItem();
+                PageParams pageParams = currentScreen.topTabParams.get(itemIndex);
+                if (pageParams != null) {
+                    navigatorEventId = pageParams.getNavigatorEventId();
+                }
+            }
+        }
+
         if (currentScreen.overrideBackPressInJs) {
-            NavigationApplication.instance.getEventEmitter().sendNavigatorEvent("backPress", currentScreen.getNavigatorEventId());
+            NavigationApplication.instance.getEventEmitter().sendNavigatorEvent("backPress", navigatorEventId);
             return true;
         }
         return false;
