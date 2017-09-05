@@ -9,6 +9,7 @@ public class ScreenParams extends BaseScreenParams {
     public List<PageParams> topTabParams;
     public List<String> sharedElementsTransitions;
     public ScreenTransitionsParams screenTransitionsParams;
+    public boolean back;
 
     public boolean hasTopTabs() {
         return topTabParams != null && !topTabParams.isEmpty();

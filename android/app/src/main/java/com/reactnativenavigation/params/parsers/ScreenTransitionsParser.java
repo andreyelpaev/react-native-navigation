@@ -9,27 +9,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScreenTransitionsParser {
-    private static final String SCREEN_TRANSITIONS_NEXT_SHOW = "nextShow";
-    private static final String SCREEN_TRANSITIONS_PREV_HIDE = "prevHide";
-    private static final String SCREEN_TRANSITIONS_NEXT_HIDE = "nextHide";
-    private static final String SCREEN_TRANSITIONS_PREV_SHOW = "prevShow";
+    private static final String SCREEN_TRANSITIONS_NEXT_SHOW = "nextScreenTransition";
+    private static final String SCREEN_TRANSITIONS_PREV_HIDE = "previousScreenTransition";
 
     public static ScreenTransitionsParams getScreenTransitions(Bundle bundle) {
         if (bundle == null) return null;
 
         ScreenTransitionsParams screenTransitionsParams = new ScreenTransitionsParams();
 
-        screenTransitionsParams.nextShow =
+        screenTransitionsParams.nextScreenTransition =
                 getScreenAnimations(bundle.getBundle(SCREEN_TRANSITIONS_NEXT_SHOW));
 
-        screenTransitionsParams.prevHide =
+        screenTransitionsParams.previousScreenTransition =
                 getScreenAnimations(bundle.getBundle(SCREEN_TRANSITIONS_PREV_HIDE));
-
-        screenTransitionsParams.nextHide =
-                getScreenAnimations(bundle.getBundle(SCREEN_TRANSITIONS_NEXT_HIDE));
-
-        screenTransitionsParams.prevShow =
-                getScreenAnimations(bundle.getBundle(SCREEN_TRANSITIONS_PREV_SHOW));
 
         return screenTransitionsParams;
     }

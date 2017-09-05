@@ -119,10 +119,10 @@ class ScreenAnimator {
             List<ScreenAnimationParams> nextShowAnimations = ScreenAnimationPresets.getShowPreset(animationType);
             animators.addAll(getAnimators(this.screen, nextShowAnimations));
         } else {
-            List<ScreenAnimationParams> nextShowAnimations = screenTransitionsParams.nextShow;
+            List<ScreenAnimationParams> nextShowAnimations = screenTransitionsParams.nextScreenTransition;
             animators.addAll(getAnimators(this.screen, nextShowAnimations));
 
-            List<ScreenAnimationParams> prevHideAnimations = screenTransitionsParams.prevHide;
+            List<ScreenAnimationParams> prevHideAnimations = screenTransitionsParams.previousScreenTransition;
             animators.addAll(getAnimators(previousScreen, prevHideAnimations));
         }
 
@@ -154,11 +154,6 @@ class ScreenAnimator {
             List<ScreenAnimationParams> nextShowAnimations = ScreenAnimationPresets.getHidePreset(animationType);
             animators.addAll(getAnimators(this.screen, nextShowAnimations));
         } else {
-            List<ScreenAnimationParams> nextShowAnimations = screenTransitionsParams.nextHide;
-            animators.addAll(getAnimators(this.screen, nextShowAnimations));
-
-            List<ScreenAnimationParams> prevHideAnimations = screenTransitionsParams.prevShow;
-            animators.addAll(getAnimators(previousScreen, prevHideAnimations));
         }
 
         set.playTogether(animators);

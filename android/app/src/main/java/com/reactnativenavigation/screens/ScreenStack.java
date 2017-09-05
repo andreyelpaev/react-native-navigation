@@ -58,25 +58,39 @@ public class ScreenStack {
         final Screen nextScreen = ScreenFactory.create(activity, params, leftButtonOnClickListener);
         final Screen previousScreen = stack.peek();
 
-        nextScreen.setVisibility(View.INVISIBLE);
-        parent.addView(nextScreen, 0, layoutParams);
-        stack.push(nextScreen);
+        if (params.back) {
+            nextScreen.setVisibility(View.INVISIBLE);
+            parent.addView(nextScreen, 0, layoutParams);
+            stack.push(nextScreen);
 
-        nextScreen.setOnDisplayListener(new Screen.OnDisplayListener() {
-            @Override
-            public void onDisplay() {
-                NavigationApplication.instance.getEventEmitter().sendWillAppearEvent(nextScreen.getScreenParams(), NavigationType.Push);
-                nextScreen.setStyle();
-                nextScreen.screenAnimator.show(true, new Runnable() {
+            nextScreen.setOnDisplayListener(new Screen.OnDisplayListener() {
+                @Override
+                public void onDisplay() {
+                    NavigationApplication.instance.getEventEmitter().sendWillAppearEvent(nextScreen.getScreenParams(), NavigationType.Push);
+                    nextScreen.setStyle();
+                    nextScreen.screenAnimator.show(true, new Runnable() {
+                        @Override
+                        public void run() {
+                            removeElementsBelowTop();
+                            NavigationApplication.instance.getEventEmitter().sendDidAppearEvent(nextScreen.getScreenParams(), NavigationType.Push);
+                            parent.removeView(previousScreen);
+                        }
+                    }, previousScreen);
+                }
+            });
+        } else {
+            if (isStackVisible) {
+                pushScreenToVisibleStack(layoutParams, nextScreen, previousScreen, new Screen.OnDisplayListener() {
                     @Override
-                    public void run() {
+                    public void onDisplay() {
                         removeElementsBelowTop();
-                        NavigationApplication.instance.getEventEmitter().sendDidAppearEvent(nextScreen.getScreenParams(), NavigationType.Push);
-                        parent.removeView(previousScreen);
                     }
-                }, previousScreen);
+                });
+            } else {
+                pushScreenToInvisibleStack(layoutParams, nextScreen, previousScreen);
+                removeElementsBelowTop();
             }
-        });
+        }
     }
 
     private void removeElementsBelowTop() {

@@ -59,8 +59,8 @@ public class ScreenParamsParser extends Parser {
         result.sharedElementsTransitions = getSharedElementsTransitions(params);
 
         result.animationType = params.getString(ANIMATION_TYPE);
-        result.screenTransitionsParams = getScreenTransitions(params.getBundle(SCREEN_TRANSITIONS
-        ));
+        result.screenTransitionsParams = getScreenTransitions(params.getBundle(SCREEN_TRANSITIONS));
+        result.back = params.getBoolean("back", false);
 
         return result;
     }
