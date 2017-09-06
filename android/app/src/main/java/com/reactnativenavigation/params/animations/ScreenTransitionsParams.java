@@ -11,5 +11,4 @@ public class ScreenTransitionsParams {
 
     public List<ScreenAnimationParams> nextScreenTransition;
     public List<ScreenAnimationParams> previousScreenTransition;
-    public List<ScreenAnimationParams> nextHide;
 }
