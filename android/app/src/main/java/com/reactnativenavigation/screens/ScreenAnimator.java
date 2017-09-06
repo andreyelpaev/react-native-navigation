@@ -101,10 +101,12 @@ class ScreenAnimator {
 
         TimeInterpolator interpolator = params.easing.getInterpolator();
         Integer duration = params.duration;
+        Integer delay = params.delay;
 
         ObjectAnimator animator = ObjectAnimator.ofFloat(screen, type, from, to);
         animator.setInterpolator(interpolator);
         animator.setDuration(duration);
+        animator.setStartDelay(delay);
 
         return animator;
     }

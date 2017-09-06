@@ -55,7 +55,7 @@ public class ScreenTransitionsParser {
         }
 
         screenAnimationParams.duration = bundle.getInt("duration", 300);
-        screenAnimationParams.delay = bundle.getInt("delay", 300);
+        screenAnimationParams.delay = bundle.getInt("delay", 0);
         screenAnimationParams.easing = ScreenAnimationParams.Easing.fromString(bundle.getString("easing"));
 
         return screenAnimationParams;
