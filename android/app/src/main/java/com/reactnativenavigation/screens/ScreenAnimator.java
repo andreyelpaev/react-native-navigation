@@ -7,6 +7,10 @@ import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
 import android.util.Property;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 
 import com.reactnativenavigation.NavigationApplication;
 import com.reactnativenavigation.params.animations.ScreenAnimationParams;
@@ -22,6 +26,13 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 class ScreenAnimator {
+    private static final int DURATION = 250;
+    private static final int ALPHA_START_DELAY = 100;
+    private static final int ALPHA_SHORT_DURATION = 150;
+    private static final LinearInterpolator LINEAR_INTERPOLATOR = new LinearInterpolator();
+    private static final DecelerateInterpolator DECELERATE_INTERPOLATOR = new DecelerateInterpolator();
+    private static final AccelerateDecelerateInterpolator ACCELERATE_DECELERATE_INTERPOLATOR = new AccelerateDecelerateInterpolator();
+    private static final AccelerateInterpolator ACCELERATE_INTERPOLATOR = new AccelerateInterpolator();
     private final float translationY;
     private final float translationX;
     private Screen screen;
@@ -46,7 +57,7 @@ class ScreenAnimator {
             createShowAnimator(onAnimationEnd, null).start();
         } else {
             screen.setVisibility(View.VISIBLE);
-            NavigationApplication.instance.runOnMainThread(onAnimationEnd, 200);
+            NavigationApplication.instance.runOnMainThread(onAnimationEnd, DURATION);
         }
     }
 
