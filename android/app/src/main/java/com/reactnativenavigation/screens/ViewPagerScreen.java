@@ -61,6 +61,8 @@ public class ViewPagerScreen extends Screen {
 
     private void createViewPager() {
         viewPager = createViewPager(getContext());
+        viewPager.setPageMargin(32);
+        viewPager.setPageMarginDrawable(R.color.tabs_background);
         viewPager.setOffscreenPageLimit(OFFSCREEN_PAGE_LIMIT);
         LayoutParams lp = new LayoutParams(MATCH_PARENT, MATCH_PARENT);
         if (screenParams.styleParams.drawScreenBelowTopBar) {
