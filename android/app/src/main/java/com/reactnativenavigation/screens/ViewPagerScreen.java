@@ -134,7 +134,7 @@ public class ViewPagerScreen extends Screen {
         return screenParams.topTabParams.get(getCurrentItem()).navigationParams.navigatorEventId;
     }
 
-    private int getCurrentItem() {
+    public int getCurrentItem() {
         return viewPager == null ? 0 : viewPager.getCurrentItem();
     }
 
