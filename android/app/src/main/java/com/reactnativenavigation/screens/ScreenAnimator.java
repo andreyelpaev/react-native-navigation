@@ -4,6 +4,8 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.TimeInterpolator;
+import android.util.Property;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
@@ -11,10 +13,14 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
 import com.reactnativenavigation.NavigationApplication;
+import com.reactnativenavigation.params.animations.ScreenAnimationParams;
+import com.reactnativenavigation.params.animations.ScreenAnimationPresets;
+import com.reactnativenavigation.params.animations.ScreenTransitionsParams;
 import com.reactnativenavigation.utils.ViewUtils;
 import com.reactnativenavigation.views.sharedElementTransition.SharedElementsAnimator;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -33,13 +39,22 @@ class ScreenAnimator {
 
     ScreenAnimator(Screen screen) {
         this.screen = screen;
-        translationY = 0.08f * ViewUtils.getWindowHeight(screen.activity);
+        translationY = ViewUtils.getWindowHeight(screen.activity);
         translationX = ViewUtils.getWindowWidth(screen.activity);
+    }
+
+    public void show(boolean animate, final Runnable onAnimationEnd, Screen previousScreen) {
+        if (animate) {
+            createShowAnimator(onAnimationEnd, previousScreen).start();
+        } else {
+            screen.setVisibility(View.VISIBLE);
+            NavigationApplication.instance.runOnMainThread(onAnimationEnd, 200);
+        }
     }
 
     public void show(boolean animate, final Runnable onAnimationEnd) {
         if (animate) {
-            createShowAnimator(onAnimationEnd).start();
+            createShowAnimator(onAnimationEnd, null).start();
         } else {
             screen.setVisibility(View.VISIBLE);
             NavigationApplication.instance.runOnMainThread(onAnimationEnd, DURATION);
@@ -48,7 +63,7 @@ class ScreenAnimator {
 
     public void show(boolean animate) {
         if (animate) {
-            createShowAnimator(null).start();
+            createShowAnimator(null, null).start();
         } else {
             screen.setVisibility(View.VISIBLE);
         }
@@ -56,40 +71,75 @@ class ScreenAnimator {
 
     public void hide(boolean animate, Runnable onAnimationEnd) {
         if (animate) {
-            createHideAnimator(onAnimationEnd).start();
+            createHideAnimator(onAnimationEnd, null).start();
         } else {
             screen.setVisibility(View.INVISIBLE);
             onAnimationEnd.run();
         }
     }
 
-    private Animator createShowAnimator(final @Nullable Runnable onAnimationEnd) {
-        ObjectAnimator alpha = ObjectAnimator.ofFloat(screen, View.ALPHA, 0, 1);
-        alpha.setInterpolator(DECELERATE_INTERPOLATOR);
-
-        AnimatorSet set = new AnimatorSet();
-        switch (String.valueOf(this.screen.screenParams.animationType)) {
-            case "fade": {
-                alpha.setDuration(DURATION);
-                set.play(alpha);
-                break;
-            }
-            case "slide-horizontal": {
-                ObjectAnimator translationX = ObjectAnimator.ofFloat(screen, View.TRANSLATION_X, this.translationX, 0);
-                translationX.setInterpolator(ACCELERATE_DECELERATE_INTERPOLATOR);
-                translationX.setDuration(DURATION);
-                set.play(translationX);
-                break;
-            }
-            default: {
-                ObjectAnimator translationY = ObjectAnimator.ofFloat(screen, View.TRANSLATION_Y, this.translationY, 0);
-                translationY.setInterpolator(DECELERATE_INTERPOLATOR);
-                translationY.setDuration(DURATION);
-                alpha.setDuration(ALPHA_SHORT_DURATION);
-                set.playTogether(translationY, alpha);
-                break;
-            }
+    public void hide(boolean animate, Runnable onAnimationEnd, Screen previous) {
+        if (animate) {
+            createHideAnimator(onAnimationEnd, previous).start();
+        } else {
+            screen.setVisibility(View.INVISIBLE);
+            onAnimationEnd.run();
         }
+    }
+
+    private Collection<Animator> getAnimators(Screen screen, List<ScreenAnimationParams> screenAnimationParamsList) {
+        Collection<Animator> animators = new ArrayList<>();
+        for (ScreenAnimationParams params : screenAnimationParamsList) {
+            ObjectAnimator animator = getAnimator(screen, params);
+            animators.add(animator);
+        }
+        return animators;
+    }
+
+    private ObjectAnimator getAnimator(Screen screen, ScreenAnimationParams params) {
+        if (params == null) return null;
+        Property<View, Float> type = params.type.getProperty();
+        Float from = params.from;
+        Float to = params.to;
+
+        if (type == View.TRANSLATION_X) {
+            from *= this.translationX;
+            to *= this.translationX;
+        } else if (type == View.TRANSLATION_Y) {
+            from *= this.translationY;
+            to *= this.translationY;
+        }
+
+        TimeInterpolator interpolator = params.easing.getInterpolator();
+        Integer duration = params.duration;
+        Integer delay = params.delay;
+
+        ObjectAnimator animator = ObjectAnimator.ofFloat(screen, type, from, to);
+        animator.setInterpolator(interpolator);
+        animator.setDuration(duration);
+        animator.setStartDelay(delay);
+
+        return animator;
+    }
+
+    private Animator createShowAnimator(final @Nullable Runnable onAnimationEnd, @Nullable Screen previousScreen) {
+        AnimatorSet set = new AnimatorSet();
+        Collection<Animator> animators = new ArrayList<>();
+        ScreenTransitionsParams screenTransitionsParams = this.screen.screenParams.screenTransitionsParams;
+        String animationType = this.screen.screenParams.animationType;
+
+        if (screenTransitionsParams == null) {
+            List<ScreenAnimationParams> nextShowAnimations = ScreenAnimationPresets.getShowPreset(animationType);
+            animators.addAll(getAnimators(this.screen, nextShowAnimations));
+        } else {
+            List<ScreenAnimationParams> nextShowAnimations = screenTransitionsParams.nextScreenTransition;
+            animators.addAll(getAnimators(this.screen, nextShowAnimations));
+
+            List<ScreenAnimationParams> prevHideAnimations = screenTransitionsParams.previousScreenTransition;
+            animators.addAll(getAnimators(previousScreen, prevHideAnimations));
+        }
+
+        set.playTogether(animators);
 
         set.addListener(new AnimatorListenerAdapter() {
             @Override
@@ -107,34 +157,19 @@ class ScreenAnimator {
         return set;
     }
 
-    private Animator createHideAnimator(final Runnable onAnimationEnd) {
-        ObjectAnimator alpha = ObjectAnimator.ofFloat(screen, View.ALPHA, 0);
-        alpha.setInterpolator(DECELERATE_INTERPOLATOR);
-
+    private Animator createHideAnimator(final Runnable onAnimationEnd, Screen previousScreen) {
         AnimatorSet set = new AnimatorSet();
-        switch (String.valueOf(this.screen.screenParams.animationType)) {
-            case "fade": {
-                alpha.setDuration(DURATION);
-                set.play(alpha);
-                break;
-            }
-            case "slide-horizontal": {
-                ObjectAnimator translationX = ObjectAnimator.ofFloat(screen, View.TRANSLATION_X, this.translationX);
-                translationX.setInterpolator(ACCELERATE_INTERPOLATOR);
-                translationX.setDuration(DURATION);
-                set.play(translationX);
-                break;
-            }
-            default: {
-                ObjectAnimator translationY = ObjectAnimator.ofFloat(screen, View.TRANSLATION_Y, this.translationY);
-                translationY.setInterpolator(ACCELERATE_INTERPOLATOR);
-                translationY.setDuration(DURATION);
-                alpha.setStartDelay(ALPHA_START_DELAY);
-                alpha.setDuration(ALPHA_SHORT_DURATION);
-                set.playTogether(translationY, alpha);
-                break;
-            }
+        Collection<Animator> animators = new ArrayList<>();
+        ScreenTransitionsParams screenTransitionsParams = this.screen.screenParams.screenTransitionsParams;
+        String animationType = this.screen.screenParams.animationType;
+
+        if (screenTransitionsParams == null) {
+            List<ScreenAnimationParams> nextShowAnimations = ScreenAnimationPresets.getHidePreset(animationType);
+            animators.addAll(getAnimators(this.screen, nextShowAnimations));
+        } else {
         }
+
+        set.playTogether(animators);
 
         set.addListener(new AnimatorListenerAdapter() {
             @Override
