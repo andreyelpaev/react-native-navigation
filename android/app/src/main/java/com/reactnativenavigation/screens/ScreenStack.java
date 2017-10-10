@@ -10,6 +10,7 @@ import android.widget.RelativeLayout.LayoutParams;
 
 import com.facebook.react.bridge.Callback;
 import com.reactnativenavigation.NavigationApplication;
+import com.reactnativenavigation.params.BaseScreenParams;
 import com.reactnativenavigation.params.ContextualMenuParams;
 import com.reactnativenavigation.params.FabParams;
 import com.reactnativenavigation.params.PageParams;
@@ -59,6 +60,7 @@ public class ScreenStack {
         final Screen previousScreen = stack.peek();
 
         if (params.back) {
+            NavigationApplication.instance.getEventEmitter().sendWillDisappearEvent(previousScreen.getScreenParams(), NavigationType.Push);
             nextScreen.setVisibility(View.INVISIBLE);
             parent.addView(nextScreen, 0, layoutParams);
             stack.push(nextScreen);
@@ -66,6 +68,7 @@ public class ScreenStack {
             nextScreen.setOnDisplayListener(new Screen.OnDisplayListener() {
                 @Override
                 public void onDisplay() {
+                    NavigationApplication.instance.getEventEmitter().sendDidDisappearEvent(previousScreen.getScreenParams(), NavigationType.Push);
                     NavigationApplication.instance.getEventEmitter().sendWillAppearEvent(nextScreen.getScreenParams(), NavigationType.Push);
                     nextScreen.setStyle();
                     nextScreen.screenAnimator.show(true, new Runnable() {
@@ -146,7 +149,8 @@ public class ScreenStack {
                                           @Nullable final Screen.OnDisplayListener onDisplay) {
         nextScreen.setVisibility(View.INVISIBLE);
         addScreen(nextScreen, layoutParams);
-        NavigationApplication.instance.getEventEmitter().sendWillDisappearEvent(previousScreen.getScreenParams(), NavigationType.Push);
+        String eventId = getNavigatorEventId(previousScreen, previousScreen.getScreenParams());
+        NavigationApplication.instance.getEventEmitter().sendWillDisappearEvent(previousScreen.getScreenParams(), NavigationType.Push, eventId);
         nextScreen.setOnDisplayListener(new Screen.OnDisplayListener() {
             @Override
             public void onDisplay() {
@@ -154,7 +158,8 @@ public class ScreenStack {
                     @Override
                     public void run() {
                         if (onDisplay != null) onDisplay.onDisplay();
-                        NavigationApplication.instance.getEventEmitter().sendDidDisappearEvent(previousScreen.getScreenParams(), NavigationType.Push);
+                        String eventId = getNavigatorEventId(previousScreen, previousScreen.getScreenParams());
+                        NavigationApplication.instance.getEventEmitter().sendDidDisappearEvent(previousScreen.getScreenParams(), NavigationType.Push, eventId);
                         parent.removeView(previousScreen);
                     }
                 }, NavigationType.Push, previousScreen);
@@ -419,19 +424,28 @@ public class ScreenStack {
         return stack.peek().getStyleParams();
     }
 
-    public boolean handleBackPressInJs() {
-        Screen screen = stack.peek();
-        ScreenParams currentScreen = screen.screenParams;
-        String navigatorEventId = currentScreen.getNavigatorEventId();
-        if (currentScreen.hasTopTabs()) {
-            if (screen instanceof ViewPagerScreen) {
-                int itemIndex = ((ViewPagerScreen) screen).getCurrentItem();
-                PageParams pageParams = currentScreen.topTabParams.get(itemIndex);
-                if (pageParams != null) {
-                    navigatorEventId = pageParams.getNavigatorEventId();
+    private String getNavigatorEventId(Screen screen, BaseScreenParams screenParams) {
+        String navigatorEventId = screen.getNavigatorEventId();
+        if (screenParams instanceof ScreenParams) {
+            ScreenParams params = (ScreenParams) screenParams;
+            if (params.hasTopTabs()) {
+                if (screen instanceof ViewPagerScreen) {
+                    int itemIndex = ((ViewPagerScreen) screen).getCurrentItem();
+                    PageParams pageParams = params.topTabParams.get(itemIndex);
+                    if (pageParams != null) {
+                        navigatorEventId = pageParams.getNavigatorEventId();
+                    }
                 }
             }
         }
+
+        return navigatorEventId;
+    }
+
+    public boolean handleBackPressInJs() {
+        Screen screen = stack.peek();
+        ScreenParams currentScreen = screen.screenParams;
+        String navigatorEventId = getNavigatorEventId(screen, currentScreen);
 
         if (currentScreen.overrideBackPressInJs) {
             NavigationApplication.instance.getEventEmitter().sendNavigatorEvent("backPress", navigatorEventId);

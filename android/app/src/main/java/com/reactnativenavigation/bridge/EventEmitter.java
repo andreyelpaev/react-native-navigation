@@ -7,6 +7,8 @@ import com.reactnativenavigation.params.BaseScreenParams;
 import com.reactnativenavigation.react.ReactGateway;
 import com.reactnativenavigation.screens.NavigationType;
 
+import javax.annotation.Nullable;
+
 public class EventEmitter {
     private ReactGateway reactGateway;
 
@@ -25,12 +27,30 @@ public class EventEmitter {
     }
 
     public void sendWillDisappearEvent(BaseScreenParams params, NavigationType type) {
-        sendScreenChangedEventToJsScreen("willDisappear", params.getNavigatorEventId());
-        sendGlobalScreenChangedEvent("willDisappear", params.timestamp, params.screenId, type);
+        sendWillDisappearEvent(params, type, null);
     }
 
     public void sendDidDisappearEvent(BaseScreenParams params, NavigationType type) {
-        sendScreenChangedEventToJsScreen("didDisappear", params.getNavigatorEventId());
+        sendDidDisappearEvent(params, type, null);
+    }
+
+    public void sendWillDisappearEvent(BaseScreenParams params, NavigationType type, @Nullable String navigatorEventId) {
+        String eventId = params.getNavigatorEventId();
+        if (navigatorEventId != null) {
+            eventId = navigatorEventId;
+        }
+
+        sendScreenChangedEventToJsScreen("willDisappear", eventId);
+        sendGlobalScreenChangedEvent("willDisappear", params.timestamp, params.screenId, type);
+    }
+
+    public void sendDidDisappearEvent(BaseScreenParams params, NavigationType type, @Nullable String navigatorEventId) {
+        String eventId = params.getNavigatorEventId();
+        if (navigatorEventId != null) {
+            eventId = navigatorEventId;
+        }
+
+        sendScreenChangedEventToJsScreen("didDisappear", eventId);
         sendGlobalScreenChangedEvent("didDisappear", params.timestamp, params.screenId, type);
     }
 
