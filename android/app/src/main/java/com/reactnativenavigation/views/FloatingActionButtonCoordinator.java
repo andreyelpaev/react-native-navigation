@@ -17,6 +17,7 @@ import com.reactnativenavigation.NavigationApplication;
 import com.reactnativenavigation.params.FabActionParams;
 import com.reactnativenavigation.params.FabParams;
 import com.reactnativenavigation.utils.ViewUtils;
+import android.widget.ImageView.ScaleType;
 
 import java.util.ArrayList;
 
@@ -135,6 +136,7 @@ class FloatingActionButtonCoordinator {
         FloatingActionButton fab = new FloatingActionButton(parent.getContext());
         fab.setId(ViewUtils.generateViewId());
         fab.setImageDrawable(icon);
+        fab.setScaleType(ScaleType.CENTER);
         return fab;
     }
 
