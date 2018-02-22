@@ -84,14 +84,14 @@ public class ScreenStack {
             });
         } else {
             if (isStackVisible) {
-                pushScreenToVisibleStack(layoutParams, nextScreen, previousScreen, new Screen.OnDisplayListener() {
+                pushScreenToVisibleStack(layoutParams, nextScreen, previousScreen, null, new Screen.OnDisplayListener() {
                     @Override
                     public void onDisplay() {
                         removeElementsBelowTop();
                     }
                 });
             } else {
-                pushScreenToInvisibleStack(layoutParams, nextScreen, previousScreen);
+                pushScreenToInvisibleStack(layoutParams, nextScreen, previousScreen, null);
                 removeElementsBelowTop();
             }
         }
